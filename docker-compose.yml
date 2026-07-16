@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: gymbear-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: API_SPRING_DB
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - gymbear-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
+
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: gymbear-backend
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/API_SPRING_DB?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      APP_CORS_ALLOWEDORIGIN: ${APP_CORS_ALLOWEDORIGIN:-http://localhost:4200}
+      JWT_KEY: ${JWT_KEY}
+    ports:
+      - "8000:8000"
+    volumes:
+      - fotos_data:/app/fotos
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - gymbear-network
+
+volumes:
+  mysql_data:
+  fotos_data:
+
+networks:
+  gymbear-network:
+    driver: bridge
