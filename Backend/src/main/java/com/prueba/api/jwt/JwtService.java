@@ -6,11 +6,12 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +22,22 @@ public class JwtService {
 
     @Value("${key}")
     private String KEY;
+
+    private SecretKey signingKey;
+
+    @PostConstruct
+    public void init() {
+        try {
+            byte[] keyBytes = Decoders.BASE64.decode(KEY);
+            if (keyBytes.length >= 32) {
+                this.signingKey = Keys.hmacShaKeyFor(keyBytes);
+                return;
+            }
+        } catch (Exception ignored) {
+        }
+        this.signingKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    }
+
     public String getToken(User user) {
         return getToken(new HashMap<>(), user);
     }
@@ -33,14 +50,8 @@ public class JwtService {
                 .setSubject(user.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis()+1000*24*60))
-                .signWith(getKey(), SignatureAlgorithm.HS256)
+                .signWith(signingKey, SignatureAlgorithm.HS256)
                 .compact();
-    }
-    //.claim("user", user)  //Pasar al token el objeto entero
-
-    private Key getKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(KEY);
-        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String getUsernameToken(String token) {
@@ -54,7 +65,7 @@ public class JwtService {
 
     public Claims getClaims(String token){
         return  Jwts.parserBuilder()
-                .setSigningKey(getKey())
+                .setSigningKey(signingKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
