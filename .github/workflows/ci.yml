@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [master, feature/mejoras]
+  pull_request:
+    branches: [master]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test
+          MYSQL_DATABASE: API_SPRING_DB
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=10
+
+    defaults:
+      run:
+        working-directory: ./Backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build and test with Maven
+        run: ./mvnw verify -B
+        env:
+          MYSQL_HOST: localhost
+          MYSQL_PORT: 3306
+          MYSQL_USER: root
+          MYSQL_PASSWORD: test
+          JWT_KEY: VGhlIHNwZWNpZmllZCBrZXkgYnl0ZSBhcnJheSBpcyA4MCBiaXRzIHdoaWNoIGlzIG5vdCBzZWN1cmUgZW5vdWdoIGZvciBhbnkgSldUIEhNQUMtU0hBIGFsZ29yaXRobQ==
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./Frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: Frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build --if-present
+
+      - name: Test
+        run: npm test -- --watch=false --browsers=ChromeHeadless
