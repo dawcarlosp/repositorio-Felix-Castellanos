@@ -87,3 +87,6 @@ Frontend/src/assets/data.json
 
 # Environment-specific config (override with real values)
 Frontend/src/environments/environment.prod.ts
+
+# Runtime uploaded files
+fotos/
