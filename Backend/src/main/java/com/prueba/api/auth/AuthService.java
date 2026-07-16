@@ -96,4 +96,17 @@ public class AuthService {
                 .build();
     }
 
+    public String encodePassword(String rawPassword) {
+        return passwordEncoder.encode(rawPassword);
+    }
+
+    public AuthResponse generateResponse(User user) {
+        UserDTO userDTO = UserDTO.userToDto(user);
+        String token = jwtService.getToken(user);
+        return AuthResponse.builder()
+                .token(token)
+                .userSession(userDTO)
+                .build();
+    }
+
 }
