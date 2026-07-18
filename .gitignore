@@ -75,3 +75,18 @@
 # System files
 /Frontend/.DS_Store
 /Frontend/Thumbs.db
+
+# Plans (no subir al repo original)
+plans/
+
+# Environment files (contain secrets)
+.env
+
+# Personal/sensitive data
+Frontend/src/assets/data.json
+
+# Environment-specific config (override with real values)
+Frontend/src/environments/environment.prod.ts
+
+# Runtime uploaded files
+fotos/

@@ -34,6 +34,7 @@ public class EjercicioController {
     private final UserService userService;
     private final JwtService jwtService;
     private final Environment env;
+    private final FileUploadEjercicios fileUploadEjercicios;
 
     @GetMapping("{idEjercicio}")        //@RequestHeader("Authorization") String header, Esto se puede hacer cuando le envio el header a mano
     public ResponseEntity<?> getEjercicio(@PathVariable String idEjercicio) {
@@ -149,7 +150,7 @@ public class EjercicioController {
             Ejercicio ejercicioSave = ejercicioService.saveUpdate(ejer);
             List<FotosEjercicio> nuevoArrFotos = new ArrayList<>();
             for (MultipartFile filezilla : file){
-                String nombreFile = FileUploadEjercicios.uploadFile(filezilla);
+                String nombreFile = fileUploadEjercicios.uploadFile(filezilla);
                 FotosEjercicio newFotico = FotosEjercicio.builder().foto(nombreFile).ejercicio(ejercicioSave).build();
                 fotosEjercicioService.save(newFotico);
                 nuevoArrFotos.add(newFotico);

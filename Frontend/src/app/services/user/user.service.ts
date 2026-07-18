@@ -15,7 +15,7 @@ export class UserService {
 
 
   deleteUser(username: string): Observable<any> {
-    return this.http.delete<UserInterface>(environment.urlApiUrl+`user/${username}` ).pipe(
+    return this.http.delete<UserInterface>(environment.urlApiUrl+`user/${username}`, { headers: this.authService.headerWithToken } ).pipe(
       tap((userData) => {
         this.authService.logout();
         this.router.navigate(["/login"])

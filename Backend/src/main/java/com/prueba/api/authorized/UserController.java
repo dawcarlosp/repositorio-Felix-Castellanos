@@ -25,6 +25,7 @@ public class UserController {
     private final UserService userService;
     private final JwtService jwtService;
     private final Environment env;
+    private final FileRemover fileRemover;
 
     @PostMapping(value = "welcome")
     public ResponseEntity<?> welcome(@RequestHeader("Authorization") String header){
@@ -55,20 +56,26 @@ public class UserController {
         return new ResponseEntity<>(userDTO, HttpStatus.OK);
     }
 
-    //Cuando el delete es exitoso, tengo que devolver una respuesta, no un objeto
     @DeleteMapping(value = "{username}")
-    public ResponseEntity<?> delete(@PathVariable String username) {
+    public ResponseEntity<?> delete(@RequestHeader("Authorization") String header, @PathVariable String username) {
         Map<String, Object> response = new HashMap<>();
+
+        String sessionUsername = jwtService.getUsernameToken(header.substring(7));
+        if (!sessionUsername.equals(username)) {
+            response.put("error", "No puedes eliminar una cuenta que no es tuya");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
+
         if (!userService.existsByUsername(username)){
             response.put("error", "No se pudo realizar la accion");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
         String fotoBorrar = userService.findFotoByUsername(username);
-        response.put("OK", "Correcto");
-        if(!FileRemover.FOTO_DEFAULT.equals(fotoBorrar)){
-            userService.deleteByUsername(username);
+        if(fotoBorrar != null && !FileRemover.FOTO_DEFAULT.equals(fotoBorrar)){
+            fileRemover.deleteFile(fotoBorrar);
         }
-        FileRemover.deleteFile(fotoBorrar);
+        userService.deleteByUsername(username);
+        response.put("OK", "Correcto");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

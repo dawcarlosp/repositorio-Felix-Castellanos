@@ -1,6 +1,7 @@
 package com.prueba.api.fileUpload;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -10,18 +11,19 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
-@RequiredArgsConstructor
+@Service
 public class FileUploadEjercicios {
 
-    private static final String UPLOAD_DIR = "fotos/fotosEjercicios/";
+    @Value("${app.upload.dir.ejercicios}")
+    private String uploadDir;
 
-    public static String uploadFile(MultipartFile file) {
+    public String uploadFile(MultipartFile file) {
         if (file.isEmpty()) {
             return null;
         }
 
         try {
-            Path uploadPath = Paths.get(UPLOAD_DIR);
+            Path uploadPath = Paths.get(uploadDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }

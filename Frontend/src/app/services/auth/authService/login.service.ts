@@ -22,8 +22,8 @@ export class LoginService {
   constructor(private http: HttpClient, private cookieService: CookieService, private router: Router) {
 
     if (cookieService.get('token')) {
-      this.currentSession = new BehaviorSubject<Boolean>(!!cookieService.get('token') != null);
-      this.sessionToken = new BehaviorSubject<String>(cookieService.get('token') || '');
+      this.currentSession.next(true);
+      this.sessionToken.next(cookieService.get('token') || '');
       const userString = cookieService.get('user');
       let user: UserInterface | null = null;
 
@@ -34,7 +34,7 @@ export class LoginService {
           console.error('Error parsing user from sessionStorage', e);
         }
       }
-      this.sessionUser = new BehaviorSubject<UserInterface | null>(user);
+      this.sessionUser.next(user);
     }
   }
 
@@ -126,8 +126,20 @@ export class LoginService {
 
   isAuthenticated():boolean{
     const token = this.getTokenCookies;
-    //El !! convierte ese valor a booleano hace lo mismo que un ternario
-    return !!token;
+    if (!token) {
+      return false;
+    }
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const exp = payload.exp * 1000;
+      if (Date.now() > exp) {
+        this.logout();
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   get userToken(): String {
